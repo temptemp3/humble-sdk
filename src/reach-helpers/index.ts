@@ -3,7 +3,7 @@ import { isNetworkToken, makeNetworkToken } from "../utils";
 import {
   getBlockchain,
   getNetworkProvider,
-  UNINSTANTIATED
+  UNINSTANTIATED,
 } from "../constants";
 import * as T from "./types";
 import { formatNumberShort, trimByteString } from "../utils/utils.reach";
@@ -12,7 +12,7 @@ type LoadStdlibFn = { (args: any): any };
 export * from "./types";
 export const NETWORKS: T.NetworksMap = {
   ALGO: { name: "Algorand", abbr: "ALGO", decimals: 6 },
-  ETH: { name: "Ethereum", abbr: "ETH", decimals: 18 }
+  ETH: { name: "Ethereum", abbr: "ETH", decimals: 18 },
 };
 /**
  * @internal
@@ -56,25 +56,30 @@ export function loadReach(
   if (/(-devnet|-live|-browser)/.test(provider || "TestNet")) {
     reach = loadStdlibFn({
       REACH_CONNECTOR_MODE: provider,
-      REACH_NO_WARN: "Y"
+      REACH_NO_WARN: "Y",
     });
   } else {
     reach = loadStdlibFn({
       REACH_CONNECTOR_MODE: chain,
-      REACH_NO_WARN: "Y"
+      REACH_NO_WARN: "Y",
     });
 
     if (opts.walletFallback) {
       reach.setWalletFallback(
         reach.walletFallback({
           providerEnv: buildProviderEnv(provider, providerEnv),
-          ...opts.walletFallback
+          ...opts.walletFallback,
         })
       );
     } else reach.setProviderByEnv(buildProviderEnv(provider, providerEnv));
   }
 
   return reach;
+}
+
+export function bigNumberToNumber(bn: any) {
+  const { bigNumberToNumber } = createReachAPI();
+  return bigNumberToNumber(bn);
 }
 
 /**
@@ -105,7 +110,6 @@ export function safeNetwork(val?: T.NetworkProvider): T.NetworkProvider {
   return safe;
 }
 
-
 /** @internal */
 function buildProviderEnv(
   provider: T.NetworkProvider,
@@ -121,7 +125,7 @@ function buildProviderEnv(
     ALGO_INDEXER_SERVER: indexer,
     ALGO_INDEXER_PORT: "",
     REACH_ISOLATED_NETWORK: "no",
-    ...overrides
+    ...overrides,
   };
 
   return env;
@@ -133,8 +137,8 @@ function getBaseURLHeaders() {
     return {
       headers: {
         "X-Algo-API-Token":
-          "c87f5580d7a866317b4bfe9e8b8d1dda955636ccebfa88c12b414db208dd9705"
-      }
+          "c87f5580d7a866317b4bfe9e8b8d1dda955636ccebfa88c12b414db208dd9705",
+      },
     };
   return {};
 }
@@ -144,8 +148,8 @@ function getIndexerURLHeaders() {
   if (net === "ALGO-devnet")
     return {
       headers: {
-        "X-Indexer-API-Token": "reach-devnet"
-      }
+        "X-Indexer-API-Token": "reach-devnet",
+      },
     };
   return {};
 }
@@ -279,7 +283,7 @@ export async function tokenMetadata(
 
   const [metadata, bal] = await Promise.allSettled([
     fetchToken(),
-    fetchBalance()
+    fetchBalance(),
   ]);
 
   if (metadata.status === "rejected" || metadata.value === null) {
@@ -306,7 +310,7 @@ function formatReachToken(tokenId: any, amount: any, data: any): T.ReachToken {
     decimals: data.decimals,
     verified: data.verified || false,
     verificationTier:
-      data.verification_tier || data.verificationTier || "unverified"
+      data.verification_tier || data.verificationTier || "unverified",
   };
 }
 
@@ -346,7 +350,7 @@ function peraToReachToken(
     supply: data.total || data.total_supply.toString(),
     url: data.url || data.project_url || data.logo,
     verified: data.is_verified || false,
-    verificationTier: data.verification_tier
+    verificationTier: data.verification_tier,
   };
 }
 /** @internal  */

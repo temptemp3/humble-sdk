@@ -140,10 +140,12 @@ export type ReachEvent<T extends any> = { when: any; what: T };
 export type ReachEventStream<T> = {
   [x: string]: {
     next(): Promise<ReachEvent<any>>;
+    nextUpToTime(t: BigNumber): Promise<ReachEvent<any>>;
     seek(t: BigNumber): void;
     seekNow(): Promise<void>;
     lastTime(): Promise<BigNumber>;
     monitor(handler: (e: ReachEvent<any>) => void): Promise<void>;
+    monitorUpToTime(maxTime: BigNumber, handler: (e: ReachEvent<any>) => void): Promise<void>;
   } & { [k in keyof T]: any };
 };
 

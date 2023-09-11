@@ -144,6 +144,7 @@ export async function fetchLiquidityPool(
   };
 
   const tradeable: boolean = reach.gt(aBal, 0) && reach.gt(bBal, 0);
+
   const data: FetchPoolData = {
     pool,
     tradeable,

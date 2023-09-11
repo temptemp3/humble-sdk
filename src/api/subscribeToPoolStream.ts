@@ -1,10 +1,15 @@
-import { ReachAccount, parseAddress, Maybe } from "../reach-helpers";
+import {
+  ReachAccount,
+  parseAddress,
+  Maybe,
+  bigNumberToNumber,
+} from "../reach-helpers";
 import { fromMaybe, noOp } from "../utils/utils.reach";
 import { announcerBackend } from "../build/backend";
 import { getPoolAnnouncer } from "../constants";
 import {
   fetchLiquidityPool,
-  FetchPoolOpts
+  FetchPoolOpts,
 } from "../participants/PoolAnnouncer";
 import { FetchPoolData, ReachTxnOpts, TransactionResult } from "types";
 
@@ -20,6 +25,8 @@ export type PoolSubscriptionOpts = {
   startFrom?: number;
   /** Exclude notifications prior to "now" when true */
   seekNow?: boolean;
+  /** Called when a new pool is received */
+  maxTime?: number;
 } & ReachTxnOpts;
 
 /** @internal */
@@ -55,7 +62,8 @@ export async function subscribeToPoolStream(
 
   // if the pool is using the network token, then we know the first token
   // from the response will be null when unwrapped
-  return ctc.events.Register.monitor(({ what }: PoolRegisterEvent) => {
+  return ctc.events.Register.monitorUpToTime(opts.maxTime, ({ when, what }: PoolRegisterEvent) => {
+    const time = bigNumberToNumber(when);
     const [poolAddr, maybeTokA, tokB] = what;
     const fPoolAddr = parseAddress(poolAddr);
     const tokA = fromMaybe(maybeTokA, parseAddress, "0");
@@ -63,19 +71,16 @@ export async function subscribeToPoolStream(
     // Patch: this token was deleted after someone created a pool with it.
     // Excluded since bad thing happen when fetching the pool
     if (tokBId.toString() === "842581764") return;
-    onPoolReceived([fPoolAddr, tokA, tokBId]);
-
+    onPoolReceived([fPoolAddr, tokA, tokBId, time]);
     if (!onPoolFetched) return;
-
     // Asynchronous fetch and check whether pool has liquidity
     const fetchOpts: FetchPoolOpts = {
       poolAddress: fPoolAddr,
       n2nn: tokA === "0",
       onComplete: opts.onComplete || noOp,
       onProgress: opts.onProgress || noOp,
-      includeTokens: opts.includeTokens
+      includeTokens: opts.includeTokens,
     };
-
     fetchLiquidityPool(acc, fetchOpts).then(onPoolFetched);
   });
 }
